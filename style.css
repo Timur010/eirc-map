@@ -1,0 +1,307 @@
+:root {
+  --bg: #ffffff;
+  --text: #1f2933;
+  --muted: #7b8794;
+  --accent: #fc3f1d;
+  --border: #e4e7eb;
+  --warn-bg: #fff4e5;
+  --warn-text: #8a4b00;
+}
+
+* { box-sizing: border-box; }
+
+html, body {
+  height: 100%;
+  margin: 0;
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  color: var(--text);
+}
+
+#map {
+  position: fixed;
+  inset: 0;
+}
+
+.panel {
+  position: fixed;
+  top: 16px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 10;
+  width: 640px;
+  max-width: calc(100vw - 32px);
+  max-height: calc(100vh - 32px);
+  overflow: auto;
+  padding: 16px 18px;
+  background: var(--bg);
+  border-radius: 12px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.18);
+}
+
+.panel h1 {
+  margin: 0 0 8px;
+  font-size: 22px;
+}
+
+.search {
+  display: flex;
+  gap: 8px;
+  margin: 0 0 12px;
+}
+
+.search input {
+  flex: 1;
+  min-width: 0;
+  padding: 10px 12px;
+  font-size: 17px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  outline: none;
+}
+
+.search input:focus {
+  border-color: var(--accent);
+}
+
+.search button {
+  padding: 10px 18px;
+  font-size: 17px;
+  font-weight: 600;
+  color: #fff;
+  background: var(--accent);
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.search button:hover {
+  opacity: 0.92;
+}
+
+.hint {
+  margin: 0 0 12px;
+  font-size: 17px;
+  color: var(--muted);
+}
+
+.notice {
+  margin: 0 0 12px;
+  padding: 10px 12px;
+  font-size: 17px;
+  line-height: 1.4;
+  background: var(--warn-bg);
+  color: var(--warn-text);
+  border-radius: 8px;
+}
+
+.info {
+  margin: 0;
+  font-size: 17px;
+}
+
+.info dt {
+  margin-top: 12px;
+  font-size: 14px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--muted);
+}
+
+.info dd {
+  margin: 2px 0 0;
+  line-height: 1.4;
+  word-break: break-word;
+}
+
+.info dd.muted { color: var(--muted); }
+
+.info-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.clear-btn {
+  padding: 6px 14px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #fff;
+  background: var(--accent);
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.clear-btn:hover {
+  opacity: 0.9;
+}
+
+.info.compact dt {
+  margin-top: 8px;
+}
+
+.info.compact dt:first-child {
+  margin-top: 0;
+}
+
+.collapsible {
+  margin-top: 12px;
+  background: #fff;
+  border: none;
+  border-radius: 10px;
+  overflow: hidden;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08), 0 1px 2px rgba(0, 0, 0, 0.06);
+}
+
+.collapsible summary {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 10px 12px;
+  font-size: 17px;
+  font-weight: 600;
+  cursor: pointer;
+  background: #fff;
+  list-style: none;
+}
+
+.collapsible summary::-webkit-details-marker {
+  display: none;
+}
+
+.collapsible summary::after {
+  content: '\25BE'; /* ▾ */
+  margin-left: auto;
+  color: var(--muted);
+  transition: transform 0.15s ease;
+}
+
+.collapsible[open] summary::after {
+  transform: rotate(180deg);
+}
+
+.collapsible-title {
+  white-space: nowrap;
+}
+
+.collapsible-sub {
+  font-weight: 400;
+  font-size: 14px;
+  color: var(--muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.collapsible-body {
+  padding: 12px;
+  border-top: 1px solid #f0f1f3;
+}
+
+.collapsible-body .table-wrap {
+  margin-top: 12px;
+  box-shadow: none;
+}
+
+.section-title {
+  margin: 14px 0 6px;
+  font-size: 14px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--muted);
+}
+
+.table-wrap {
+  margin-top: 10px;
+  max-height: 260px;
+  overflow: auto;
+  background: #fff;
+  border: none;
+  border-radius: 8px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08), 0 1px 2px rgba(0, 0, 0, 0.06);
+}
+
+.data-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+  white-space: nowrap;
+}
+
+.data-table th,
+.data-table td {
+  padding: 6px 8px;
+  text-align: left;
+  border-bottom: 1px solid #f0f1f3;
+}
+
+.data-table thead th {
+  position: sticky;
+  top: 0;
+  background: #fff;
+  color: var(--muted);
+  font-weight: 600;
+  border-bottom: 1px solid #f0f1f3;
+}
+
+.data-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.photo-cell {
+  white-space: normal;
+}
+
+.photo-add-btn {
+  padding: 3px 7px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--accent);
+  background: #fff;
+  border: 1px solid var(--accent);
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.photo-add-btn:hover {
+  background: #fff0ee;
+}
+
+.photo-thumbs {
+  display: inline-flex;
+  gap: 4px;
+  margin-left: 6px;
+  vertical-align: middle;
+}
+
+.photo-thumb {
+  width: 28px;
+  height: 28px;
+  object-fit: cover;
+  border-radius: 4px;
+  border: 1px solid var(--border);
+}
+
+.photo-uploading {
+  font-size: 11px;
+  color: var(--muted);
+  margin-left: 4px;
+}
+
+/* На телефоне панель уезжает вниз, чтобы не закрывать карту */
+@media (max-width: 600px) {
+  .panel {
+    top: auto;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    transform: none;
+    width: auto;
+    max-width: none;
+    max-height: 45vh;
+    border-radius: 12px 12px 0 0;
+  }
+}

@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Карта домов</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div id="map"></div>
+
+  <aside class="panel" id="panel">
+    <h1>Карта домов</h1>
+
+    <form id="search-form" class="search" autocomplete="off">
+      <input
+        id="search-input"
+        type="text"
+        placeholder="Например: Каспийск, Назарова 2"
+        aria-label="Поиск адреса"
+      />
+      <button type="submit">Найти</button>
+    </form>
+
+    <p class="hint" id="hint">Нажмите на дом на карте или найдите адрес выше, чтобы получить его данные.</p>
+
+    <div id="notice" class="notice" hidden></div>
+
+    <dl class="info" id="info" hidden>
+      <div class="info-row">
+        <dt>Адрес</dt>
+        <button type="button" id="clear-btn" class="clear-btn">✕ Сбросить выбор</button>
+      </div>
+      <dd id="info-address">—</dd>
+
+      <dt>Данные из базы</dt>
+      <dd id="info-data-status" class="muted">Появятся после клика по дому.</dd>
+    </dl>
+
+    <details class="collapsible" id="house-info-block" hidden>
+      <summary>
+        <span class="collapsible-title">Данные ГИС ЖКХ</span>
+        <span class="collapsible-sub" id="house-info-summary">—</span>
+      </summary>
+      <div class="collapsible-body">
+        <dl class="info compact">
+          <dt>Тип дома</dt>
+          <dd id="house-info-type">—</dd>
+
+          <dt>Кадастровый номер</dt>
+          <dd id="house-info-cadastre">—</dd>
+
+          <dt>Этажность</dt>
+          <dd id="house-info-floors">—</dd>
+
+          <dt>Жилых / нежилых помещений</dt>
+          <dd id="house-info-premises">—</dd>
+
+          <dt>Управляющая компания</dt>
+          <dd id="house-info-management">—</dd>
+        </dl>
+      </div>
+    </details>
+
+    <details class="collapsible" id="contract-block" hidden>
+      <summary>
+        <span class="collapsible-title">Договор на ОДПУ</span>
+        <span class="collapsible-sub" id="contract-summary">—</span>
+      </summary>
+      <div class="collapsible-body">
+        <dl class="info compact">
+          <dt>Номер ОДПУ</dt>
+          <dd id="contract-odpu-number">—</dd>
+
+          <dt>КТТ</dt>
+          <dd id="contract-ktt">—</dd>
+        </dl>
+
+        <div class="table-wrap">
+          <table id="common-meter-table" class="data-table">
+            <thead>
+              <tr>
+                <th>Дата</th>
+                <th>Период</th>
+                <th>Показание</th>
+                <th>Расход</th>
+                <th>Доп. расход</th>
+                <th>Итог</th>
+              </tr>
+            </thead>
+            <tbody id="common-meter-table-body"></tbody>
+          </table>
+        </div>
+      </div>
+    </details>
+
+    <details class="collapsible" id="info-table-wrap" hidden>
+      <summary>
+        <span class="collapsible-title">Показания по квартирам</span>
+        <span class="collapsible-sub" id="info-table-summary">—</span>
+      </summary>
+      <div class="collapsible-body">
+        <div class="table-wrap">
+          <table id="info-table" class="data-table">
+            <thead>
+              <tr>
+                <th>Кв.</th>
+                <th>Лиц. счёт</th>
+                <th>Платёжный код</th>
+                <th>Счётчик</th>
+                <th>№ счётчика</th>
+                <th>Показания</th>
+                <th>Фото</th>
+              </tr>
+            </thead>
+            <tbody id="info-table-body"></tbody>
+          </table>
+        </div>
+      </div>
+    </details>
+    <details class="collapsible" id="commercial-block" hidden>
+      <summary>
+        <span class="collapsible-title">Коммерческие помещения</span>
+        <span class="collapsible-sub" id="commercial-summary">—</span>
+      </summary>
+      <div class="collapsible-body">
+        <div class="table-wrap">
+          <table id="commercial-table" class="data-table">
+            <thead>
+              <tr>
+                <th>Лиц. счёт</th>
+                <th>№ счётчика</th>
+                <th>Тип связи</th>
+                <th>Период</th>
+                <th>Договор</th>
+                <th>Фото</th>
+              </tr>
+            </thead>
+            <tbody id="commercial-table-body"></tbody>
+          </table>
+        </div>
+      </div>
+    </details>
+    <input
+      type="file"
+      id="photo-file-input"
+      accept="image/*"
+      capture="environment"
+      hidden
+    />
+  </aside>
+
+  <script src="config.js"></script>
+  <script src="house-data.js"></script>
+  <script src="house-info.js"></script>
+
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+  <script src="firebase-config.js"></script>
+  <script src="cloudinary-config.js"></script>
+
+  <script src="app.js"></script>
+</body>
+</html>
