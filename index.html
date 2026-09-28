@@ -2,153 +2,169 @@
 <html lang="ru">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>Карта домов</title>
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
   <div id="map"></div>
 
-  <aside class="panel" id="panel">
-    <h1>Карта домов</h1>
+  <div class="sheet" id="sheet" data-state="half">
+    <div class="sheet-handle" id="sheet-handle">
+      <span class="grip"></span>
+    </div>
 
-    <form id="search-form" class="search" autocomplete="off">
+    <div class="sheet-header" id="sheet-header">
+      <h1 class="sheet-title">Карта домов</h1>
+
+      <form id="search-form" class="search" autocomplete="off">
+        <div class="search-field">
+          <svg class="search-icon" viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
+            <path fill="currentColor" d="M15.5 14h-.79l-.28-.27a6.5 6.5 0 1 0-.7.7l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0A4.5 4.5 0 1 1 14 9.5 4.5 4.5 0 0 1 9.5 14z"/>
+          </svg>
+          <input
+            id="search-input"
+            type="text"
+            placeholder="Например: Каспийск, Назарова 2"
+            aria-label="Поиск адреса"
+          />
+          <button type="button" id="search-clear" class="search-clear" hidden aria-label="Очистить">
+            <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true">
+              <path fill="currentColor" d="M12 10.59 16.59 6 18 7.41 13.41 12 18 16.59 16.59 18 12 13.41 7.41 18 6 16.59 10.59 12 6 7.41 7.41 6z"/>
+            </svg>
+          </button>
+          <button type="submit" class="visually-hidden">Найти</button>
+        </div>
+        <button type="button" id="search-cancel" class="search-cancel" hidden>Отменить</button>
+      </form>
+    </div>
+
+    <div class="sheet-content" id="sheet-content">
+      <p class="hint" id="hint">Нажмите на дом на карте или найдите адрес выше, чтобы получить его данные.</p>
+
+      <div id="notice" class="notice" hidden></div>
+
+      <div class="address-card" id="info" hidden>
+        <div class="address-pin">
+          <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
+            <path fill="currentColor" d="M12 2C7.86 2 4.5 5.36 4.5 9.5c0 5.25 6.11 11.34 6.38 11.6a1.5 1.5 0 0 0 2.24 0c.27-.26 6.38-6.35 6.38-11.6C19.5 5.36 16.14 2 12 2zm0 10.25A2.75 2.75 0 1 1 14.75 9.5 2.75 2.75 0 0 1 12 12.25z"/>
+          </svg>
+        </div>
+        <div class="address-text">
+          <div class="address-title" id="info-address">—</div>
+          <div class="address-subtitle" id="info-data-status">Появятся после клика по дому.</div>
+        </div>
+        <button type="button" id="clear-btn" class="address-clear" aria-label="Сбросить выбор" title="Сбросить выбор">
+          <svg viewBox="0 0 24 24" width="14" height="14" aria-hidden="true">
+            <path fill="currentColor" d="M12 10.59 16.59 6 18 7.41 13.41 12 18 16.59 16.59 18 12 13.41 7.41 18 6 16.59 10.59 12 6 7.41 7.41 6z"/>
+          </svg>
+        </button>
+      </div>
+
+      <details class="collapsible" id="house-info-block" hidden>
+        <summary>
+          <span class="collapsible-icon icon-gis">🏢</span>
+          <span class="collapsible-heading">
+            <span class="collapsible-title">ГИС ЖКХ</span>
+            <span class="collapsible-sub" id="house-info-summary">—</span>
+          </span>
+          <span class="chevron"></span>
+        </summary>
+        <div class="collapsible-body">
+          <div class="kv-list">
+            <div class="kv-row">
+              <span class="kv-label">Тип дома</span>
+              <span class="kv-value" id="house-info-type">—</span>
+            </div>
+            <div class="kv-row">
+              <span class="kv-label">Кадастровый номер</span>
+              <span class="kv-value-with-action">
+                <span class="kv-value" id="house-info-cadastre">—</span>
+                <button type="button" class="copy-btn" id="cadastre-copy-btn" title="Скопировать">
+                  <svg viewBox="0 0 24 24" width="14" height="14" aria-hidden="true">
+                    <path fill="currentColor" d="M16 1H4a2 2 0 0 0-2 2v14h2V3h12zm3 4H8a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h11a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2zm0 16H8V7h11z"/>
+                  </svg>
+                </button>
+              </span>
+            </div>
+            <div class="kv-row">
+              <span class="kv-label">Этажность</span>
+              <span class="kv-value" id="house-info-floors">—</span>
+            </div>
+            <div class="kv-row">
+              <span class="kv-label">Жилых / нежилых помещений</span>
+              <span class="kv-value" id="house-info-premises">—</span>
+            </div>
+            <div class="kv-row">
+              <span class="kv-label">Управляющая компания</span>
+              <span class="kv-value" id="house-info-management">—</span>
+            </div>
+          </div>
+        </div>
+      </details>
+
+      <details class="collapsible" id="contract-block" hidden>
+        <summary>
+          <span class="collapsible-icon icon-odpu">⚡</span>
+          <span class="collapsible-heading">
+            <span class="collapsible-title">Данные ОДПУ</span>
+            <span class="collapsible-sub" id="contract-summary">—</span>
+          </span>
+          <span class="chevron"></span>
+        </summary>
+        <div class="collapsible-body">
+          <div class="kv-list">
+            <div class="kv-row">
+              <span class="kv-label">Номер ОДПУ</span>
+              <span class="kv-value" id="contract-odpu-number">—</span>
+            </div>
+            <div class="kv-row">
+              <span class="kv-label">КТТ</span>
+              <span class="kv-value" id="contract-ktt">—</span>
+            </div>
+          </div>
+
+          <div class="reading-list" id="common-meter-table-body"></div>
+        </div>
+      </details>
+
+      <details class="collapsible" id="info-table-wrap" hidden>
+        <summary>
+          <span class="collapsible-icon icon-apt">🚪</span>
+          <span class="collapsible-heading">
+            <span class="collapsible-title">Квартиры</span>
+            <span class="collapsible-sub" id="info-table-summary">—</span>
+          </span>
+          <span class="chevron"></span>
+        </summary>
+        <div class="collapsible-body">
+          <div class="apt-list" id="info-table-body"></div>
+        </div>
+      </details>
+
+      <details class="collapsible" id="commercial-block" hidden>
+        <summary>
+          <span class="collapsible-icon icon-commercial">🏬</span>
+          <span class="collapsible-heading">
+            <span class="collapsible-title">Коммерческие объекты</span>
+            <span class="collapsible-sub" id="commercial-summary">—</span>
+          </span>
+          <span class="chevron"></span>
+        </summary>
+        <div class="collapsible-body">
+          <div class="apt-list" id="commercial-table-body"></div>
+        </div>
+      </details>
+
       <input
-        id="search-input"
-        type="text"
-        placeholder="Например: Каспийск, Назарова 2"
-        aria-label="Поиск адреса"
+        type="file"
+        id="photo-file-input"
+        accept="image/*"
+        capture="environment"
+        hidden
       />
-      <button type="submit">Найти</button>
-    </form>
-
-    <p class="hint" id="hint">Нажмите на дом на карте или найдите адрес выше, чтобы получить его данные.</p>
-
-    <div id="notice" class="notice" hidden></div>
-
-    <dl class="info" id="info" hidden>
-      <div class="info-row">
-        <dt>Адрес</dt>
-        <button type="button" id="clear-btn" class="clear-btn">✕ Сбросить выбор</button>
-      </div>
-      <dd id="info-address">—</dd>
-
-      <dt>Данные из базы</dt>
-      <dd id="info-data-status" class="muted">Появятся после клика по дому.</dd>
-    </dl>
-
-    <details class="collapsible" id="house-info-block" hidden>
-      <summary>
-        <span class="collapsible-title">Данные ГИС ЖКХ</span>
-        <span class="collapsible-sub" id="house-info-summary">—</span>
-      </summary>
-      <div class="collapsible-body">
-        <dl class="info compact">
-          <dt>Тип дома</dt>
-          <dd id="house-info-type">—</dd>
-
-          <dt>Кадастровый номер</dt>
-          <dd id="house-info-cadastre">—</dd>
-
-          <dt>Этажность</dt>
-          <dd id="house-info-floors">—</dd>
-
-          <dt>Жилых / нежилых помещений</dt>
-          <dd id="house-info-premises">—</dd>
-
-          <dt>Управляющая компания</dt>
-          <dd id="house-info-management">—</dd>
-        </dl>
-      </div>
-    </details>
-
-    <details class="collapsible" id="contract-block" hidden>
-      <summary>
-        <span class="collapsible-title">Договор на ОДПУ</span>
-        <span class="collapsible-sub" id="contract-summary">—</span>
-      </summary>
-      <div class="collapsible-body">
-        <dl class="info compact">
-          <dt>Номер ОДПУ</dt>
-          <dd id="contract-odpu-number">—</dd>
-
-          <dt>КТТ</dt>
-          <dd id="contract-ktt">—</dd>
-        </dl>
-
-        <div class="table-wrap">
-          <table id="common-meter-table" class="data-table">
-            <thead>
-              <tr>
-                <th>Дата</th>
-                <th>Период</th>
-                <th>Показание</th>
-                <th>Расход</th>
-                <th>Доп. расход</th>
-                <th>Итог</th>
-              </tr>
-            </thead>
-            <tbody id="common-meter-table-body"></tbody>
-          </table>
-        </div>
-      </div>
-    </details>
-
-    <details class="collapsible" id="info-table-wrap" hidden>
-      <summary>
-        <span class="collapsible-title">Показания по квартирам</span>
-        <span class="collapsible-sub" id="info-table-summary">—</span>
-      </summary>
-      <div class="collapsible-body">
-        <div class="table-wrap">
-          <table id="info-table" class="data-table">
-            <thead>
-              <tr>
-                <th>Кв.</th>
-                <th>Лиц. счёт</th>
-                <th>Платёжный код</th>
-                <th>Счётчик</th>
-                <th>№ счётчика</th>
-                <th>Показания</th>
-                <th>Фото</th>
-              </tr>
-            </thead>
-            <tbody id="info-table-body"></tbody>
-          </table>
-        </div>
-      </div>
-    </details>
-    <details class="collapsible" id="commercial-block" hidden>
-      <summary>
-        <span class="collapsible-title">Коммерческие помещения</span>
-        <span class="collapsible-sub" id="commercial-summary">—</span>
-      </summary>
-      <div class="collapsible-body">
-        <div class="table-wrap">
-          <table id="commercial-table" class="data-table">
-            <thead>
-              <tr>
-                <th>Лиц. счёт</th>
-                <th>№ счётчика</th>
-                <th>Тип связи</th>
-                <th>Период</th>
-                <th>Договор</th>
-                <th>Фото</th>
-              </tr>
-            </thead>
-            <tbody id="commercial-table-body"></tbody>
-          </table>
-        </div>
-      </div>
-    </details>
-    <input
-      type="file"
-      id="photo-file-input"
-      accept="image/*"
-      capture="environment"
-      hidden
-    />
-  </aside>
+    </div>
+  </div>
 
   <script src="config.js"></script>
   <script src="house-data.js"></script>

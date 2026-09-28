@@ -4,6 +4,161 @@
   const cfg = window.APP_CONFIG || {};
   const $ = (id) => document.getElementById(id);
 
+  // ---------- Bottom sheet (в стиле iOS / Apple Карты) ----------
+
+  const sheet = $('sheet');
+  const sheetHandle = $('sheet-handle');
+  const sheetHeader = $('sheet-header');
+
+  // Сколько пикселей шторки видно в каждом положении.
+  const PEEK_VISIBLE_PX = 132;
+  const HALF_VISIBLE_RATIO = 0.5; // доля высоты экрана
+
+  function sheetMetrics() {
+    const h = sheet.getBoundingClientRect().height;
+    const vh = window.innerHeight;
+    const peek = Math.max(0, h - PEEK_VISIBLE_PX);
+    const half = Math.max(0, h - vh * HALF_VISIBLE_RATIO);
+    return { h, peek: Math.min(peek, h), half: Math.min(half, peek) };
+  }
+
+  let sheetState = 'half'; // 'peek' | 'half' | 'full'
+  let currentTranslate = 0;
+
+  function translateForState(state) {
+    const m = sheetMetrics();
+    if (state === 'full') return 0;
+    if (state === 'half') return m.half;
+    return m.peek;
+  }
+
+  function setSheetState(state) {
+    sheetState = state;
+    currentTranslate = translateForState(state);
+    sheet.style.transform = 'translateY(' + currentTranslate + 'px)';
+    sheet.dataset.state = state;
+  }
+
+  function expandAtLeast(state) {
+    const order = { peek: 0, half: 1, full: 2 };
+    if (order[state] > order[sheetState]) setSheetState(state);
+  }
+
+  window.addEventListener('resize', () => setSheetState(sheetState));
+
+  // ---------- Перетаскивание шторки ----------
+
+  let dragging = false;
+  let dragStartY = 0;
+  let dragStartTranslate = 0;
+
+  function isInteractive(el) {
+    return !!el.closest('input, button, .search-clear, .search-cancel, a');
+  }
+
+  function onPointerDown(e) {
+    if (isInteractive(e.target)) return;
+    dragging = true;
+    dragStartY = e.clientY;
+    dragStartTranslate = currentTranslate;
+    sheet.classList.add('dragging');
+    e.target.setPointerCapture && e.target.setPointerCapture(e.pointerId);
+  }
+
+  function onPointerMove(e) {
+    if (!dragging) return;
+    const m = sheetMetrics();
+    const delta = e.clientY - dragStartY;
+    let next = dragStartTranslate + delta;
+    next = Math.max(0, Math.min(m.peek, next));
+    currentTranslate = next;
+    sheet.style.transform = 'translateY(' + next + 'px)';
+  }
+
+  function onPointerUp() {
+    if (!dragging) return;
+    dragging = false;
+    sheet.classList.remove('dragging');
+
+    const m = sheetMetrics();
+    const points = [
+      { state: 'full', y: 0 },
+      { state: 'half', y: m.half },
+      { state: 'peek', y: m.peek },
+    ];
+    let closest = points[0];
+    let bestDist = Infinity;
+    for (const p of points) {
+      const d = Math.abs(p.y - currentTranslate);
+      if (d < bestDist) {
+        bestDist = d;
+        closest = p;
+      }
+    }
+    setSheetState(closest.state);
+  }
+
+  [sheetHandle, sheetHeader].forEach((el) => {
+    el.addEventListener('pointerdown', onPointerDown);
+  });
+  window.addEventListener('pointermove', onPointerMove);
+  window.addEventListener('pointerup', onPointerUp);
+  window.addEventListener('pointercancel', onPointerUp);
+
+  requestAnimationFrame(() => setSheetState('half'));
+
+  // ---------- Режим поиска (фокус / отмена / очистка) ----------
+
+  const searchInputEl = $('search-input');
+  const searchClearEl = $('search-clear');
+  const searchCancelEl = $('search-cancel');
+
+  function updateClearButton() {
+    searchClearEl.hidden = !searchInputEl.value;
+  }
+
+  searchInputEl.addEventListener('input', updateClearButton);
+
+  searchInputEl.addEventListener('focus', () => {
+    searchCancelEl.hidden = false;
+    updateClearButton();
+    expandAtLeast('full');
+  });
+
+  searchClearEl.addEventListener('click', () => {
+    searchInputEl.value = '';
+    updateClearButton();
+    searchInputEl.focus();
+  });
+
+  searchCancelEl.addEventListener('click', () => {
+    searchInputEl.value = '';
+    updateClearButton();
+    searchInputEl.blur();
+    searchCancelEl.hidden = true;
+  });
+
+  // ---------- Копирование кадастрового номера ----------
+
+  function initCopyButtons() {
+    document.addEventListener('click', (e) => {
+      const btn = e.target.closest('#cadastre-copy-btn');
+      if (!btn) return;
+      const text = $('house-info-cadastre').textContent;
+      if (!text || text === '—') return;
+      if (!navigator.clipboard) return;
+      navigator.clipboard
+        .writeText(text)
+        .then(() => {
+          btn.classList.add('copied');
+          setTimeout(() => btn.classList.remove('copied'), 1200);
+        })
+        .catch(() => {});
+    });
+  }
+
+  initCopyButtons();
+
   // ---------- Фото домов/счётчиков (Cloudinary + Firestore) ----------
 
   // Сами фото хранятся в Cloudinary (через unsigned upload preset —
@@ -24,10 +179,10 @@
 
   function photoCellHtml(account) {
     return (
-      '<td class="photo-cell">' +
-      '<button type="button" class="photo-add-btn" data-account="' + account + '" title="Добавить фото">+ 📷</button>' +
+      '<div class="photo-cell">' +
+      '<button type="button" class="photo-add-btn" data-account="' + account + '" title="Добавить фото">+ фото</button>' +
       '<span class="photo-thumbs" data-account-thumbs="' + account + '"></span>' +
-      '</td>'
+      '</div>'
     );
   }
 
@@ -37,11 +192,28 @@
     span.innerHTML = urls
       .map(
         (url) =>
+          '<span class="photo-thumb-wrap">' +
           '<a href="' + url + '" target="_blank" rel="noopener">' +
           '<img src="' + url + '" class="photo-thumb" alt="Фото">' +
-          '</a>'
+          '</a>' +
+          '<button type="button" class="photo-delete-btn" data-account="' + account + '" title="Удалить фото">✕</button>' +
+          '</span>'
       )
       .join('');
+  }
+
+  function deletePhoto(account, url) {
+    if (!photosCollection) return;
+    photosCollection
+      .doc(String(account))
+      .update({ urls: firebase.firestore.FieldValue.arrayRemove(url) })
+      .then(() => {
+        loadPhotosForAccounts([account]);
+      })
+      .catch((err) => {
+        console.error(err);
+        showNotice('Не удалось удалить фото: ' + (err && err.message ? err.message : err));
+      });
   }
 
   // Подгружает миниатюры для уже отрисованных строк (по списку лиц. счетов).
@@ -111,10 +283,22 @@
     if (!input) return;
 
     document.addEventListener('click', (e) => {
-      const btn = e.target.closest('.photo-add-btn');
-      if (!btn) return;
-      pendingPhotoAccount = btn.dataset.account;
-      input.click();
+      const addBtn = e.target.closest('.photo-add-btn');
+      if (addBtn) {
+        pendingPhotoAccount = addBtn.dataset.account;
+        input.click();
+        return;
+      }
+
+      const delBtn = e.target.closest('.photo-delete-btn');
+      if (delBtn) {
+        const account = delBtn.dataset.account;
+        const img = delBtn.parentElement.querySelector('img');
+        const url = img && img.src;
+        if (account && url && confirm('Удалить это фото?')) {
+          deletePhoto(account, url);
+        }
+      }
     });
 
     input.addEventListener('change', () => {
@@ -156,15 +340,17 @@
     body.innerHTML = apartments
       .map(
         (a) =>
-          '<tr>' +
-          '<td>' + a.apt + '</td>' +
-          '<td>' + a.account + '</td>' +
-          '<td>' + a.code + '</td>' +
-          '<td>' + a.meterType + '</td>' +
-          '<td>' + a.meterNumber + '</td>' +
-          '<td>' + a.reading + '</td>' +
+          '<div class="apt-row">' +
+          '<div class="apt-row-top">' +
+          '<div class="apt-badge">' + a.apt + '</div>' +
+          '<div class="apt-title">Кв. ' + a.apt + ' · лиц. счёт ' + a.account + '</div>' +
+          '<div class="apt-reading">' + a.reading + '</div>' +
+          '</div>' +
+          '<div class="apt-row-bottom">' +
+          '<div class="apt-sub">' + a.meterType + ' · № ' + a.meterNumber + (a.code ? ' · код ' + a.code : '') + '</div>' +
           photoCellHtml(a.account) +
-          '</tr>'
+          '</div>' +
+          '</div>'
       )
       .join('');
     $('info-table-summary').textContent = 'Квартир: ' + apartments.length;
@@ -212,14 +398,16 @@
     body.innerHTML = units
       .map(
         (u) =>
-          '<tr>' +
-          '<td>' + u.account + '</td>' +
-          '<td>' + u.meterNumber + '</td>' +
-          '<td>' + u.connectionType + '</td>' +
-          '<td>' + u.dateFrom + ' — ' + u.dateTo + '</td>' +
-          '<td>' + u.contract + '</td>' +
+          '<div class="apt-row">' +
+          '<div class="apt-row-top">' +
+          '<div class="apt-badge commercial-badge">🏬</div>' +
+          '<div class="apt-title">Лиц. счёт ' + u.account + ' · № ' + u.meterNumber + '</div>' +
+          '</div>' +
+          '<div class="apt-row-bottom">' +
+          '<div class="apt-sub">' + u.connectionType + ' · ' + u.dateFrom + '–' + u.dateTo + ' · дог. ' + u.contract + '</div>' +
           photoCellHtml(u.account) +
-          '</tr>'
+          '</div>' +
+          '</div>'
       )
       .join('');
 
@@ -258,14 +446,15 @@
     body.innerHTML = (readings || [])
       .map(
         (r) =>
-          '<tr>' +
-          '<td>' + r.date + '</td>' +
-          '<td>' + r.periodStart + '</td>' +
-          '<td>' + r.reading + '</td>' +
-          '<td>' + r.consumption + '</td>' +
-          '<td>' + r.extraConsumption + '</td>' +
-          '<td>' + r.totalConsumption + '</td>' +
-          '</tr>'
+          '<div class="reading-row">' +
+          '<div class="reading-date">' + r.date + ' <span class="reading-period">· период с ' + r.periodStart + '</span></div>' +
+          '<div class="reading-stats">' +
+          '<div class="stat"><span class="stat-label">Показание</span><span class="stat-value">' + r.reading + '</span></div>' +
+          '<div class="stat"><span class="stat-label">Расход</span><span class="stat-value">' + r.consumption + '</span></div>' +
+          '<div class="stat"><span class="stat-label">Доп. расход</span><span class="stat-value">' + r.extraConsumption + '</span></div>' +
+          '<div class="stat"><span class="stat-label">Итог</span><span class="stat-value strong">' + r.totalConsumption + '</span></div>' +
+          '</div>' +
+          '</div>'
       )
       .join('');
 
@@ -441,23 +630,28 @@
         map.geoObjects.remove(marker);
         marker = null;
       }
-      searchInput.value = '';
+      searchInputEl.value = '';
+      updateClearButton();
       resetInfoPanel();
     });
 
     // ---------- Поиск по адресу (своя форма вместо searchControl) ----------
 
     const searchForm = $('search-form');
-    const searchInput = $('search-input');
+    const searchInput = searchInputEl;
 
     searchForm.addEventListener('submit', async (e) => {
       e.preventDefault();
       const text = searchInput.value.trim();
       if (!text) return;
 
+      searchInput.blur();
+      searchCancelEl.hidden = true;
+
       const requestId = ++lastRequest;
       showNotice('');
       showInfo('Ищу адрес…');
+      setSheetState('half');
 
       try {
         const house = await geocodeByAddress(text);
@@ -496,6 +690,7 @@
       setMarker(clicked);
       showNotice('');
       showInfo('Определяю адрес…');
+      setSheetState('half');
 
       try {
         const house = await geocodeByCoords(clicked);
