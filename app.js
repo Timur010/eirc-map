@@ -22,7 +22,7 @@
     return { h, peek: Math.min(peek, h), half: Math.min(half, peek) };
   }
 
-  let sheetState = 'half'; // 'peek' | 'half' | 'full'
+  let sheetState = 'peek'; // 'peek' | 'half' | 'full'
   let currentTranslate = 0;
 
   function translateForState(state) {
@@ -105,7 +105,7 @@
   window.addEventListener('pointerup', onPointerUp);
   window.addEventListener('pointercancel', onPointerUp);
 
-  requestAnimationFrame(() => setSheetState('half'));
+  requestAnimationFrame(() => setSheetState('peek'));
 
   // ---------- Режим поиска (фокус / отмена / очистка) ----------
 
@@ -633,6 +633,7 @@
       searchInputEl.value = '';
       updateClearButton();
       resetInfoPanel();
+      setSheetState('peek');
     });
 
     // ---------- Поиск по адресу (своя форма вместо searchControl) ----------
@@ -651,7 +652,7 @@
       const requestId = ++lastRequest;
       showNotice('');
       showInfo('Ищу адрес…');
-      setSheetState('half');
+      expandAtLeast('half');
 
       try {
         const house = await geocodeByAddress(text);
@@ -660,6 +661,7 @@
         if (!house) {
           showInfo('Не найдено');
           showNotice('Ничего не нашлось по такому запросу. Попробуйте точнее указать адрес.');
+          setSheetState('peek');
           return;
         }
 
@@ -674,12 +676,14 @@
         }
 
         onHouseSelected(house);
+        setSheetState('full');
       } catch (err) {
         if (requestId !== lastRequest) return;
         console.error(err);
         showInfo('Ошибка');
         const detail = (err && (err.message || err.toString())) || 'неизвестная ошибка';
         showNotice('Не удалось найти адрес через HTTP Геокодер. Текст ошибки: ' + detail);
+        setSheetState('peek');
       }
     });
 
@@ -690,7 +694,7 @@
       setMarker(clicked);
       showNotice('');
       showInfo('Определяю адрес…');
-      setSheetState('half');
+      expandAtLeast('half');
 
       try {
         const house = await geocodeByCoords(clicked);
@@ -699,6 +703,7 @@
         if (!house) {
           showInfo('Адрес не найден');
           showNotice('В этой точке дом не найден. Попробуйте нажать ближе к зданию.');
+          setSheetState('peek');
           return;
         }
 
@@ -712,12 +717,14 @@
         }
 
         onHouseSelected(house);
+        setSheetState('full');
       } catch (err) {
         if (requestId !== lastRequest) return;
         console.error(err);
         showInfo('Ошибка');
         const detail = (err && (err.message || err.toString())) || 'неизвестная ошибка';
         showNotice('Не удалось определить адрес через HTTP Геокодер. Текст ошибки: ' + detail);
+        setSheetState('peek');
       }
     });
   }
