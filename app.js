@@ -14,9 +14,25 @@
   const PEEK_VISIBLE_PX = 132;
   const HALF_VISIBLE_RATIO = 0.5; // доля высоты экрана
 
+  // На мобильных при открытии клавиатуры window.innerHeight и обычные vh
+  // ведут себя непредсказуемо (особенно в iOS Safari) — из-за этого
+  // шторка могла "улетать" за пределы экрана. Используем visualViewport,
+  // если он есть: это реальная видимая область экрана без учёта клавиатуры.
+  function viewportHeight() {
+    return (window.visualViewport && window.visualViewport.height) || window.innerHeight;
+  }
+
+  // Высота самой шторки — задаём явно в пикселях через CSS-переменную,
+  // а не полагаемся на "92vh" в CSS (та не всегда пересчитывается вовремя
+  // при появлении клавиатуры).
+  function applyViewportSize() {
+    const vh = viewportHeight();
+    document.documentElement.style.setProperty('--sheet-h', Math.round(vh * 0.92) + 'px');
+  }
+
   function sheetMetrics() {
     const h = sheet.getBoundingClientRect().height;
-    const vh = window.innerHeight;
+    const vh = viewportHeight();
     const peek = Math.max(0, h - PEEK_VISIBLE_PX);
     const half = Math.max(0, h - vh * HALF_VISIBLE_RATIO);
     return { h, peek: Math.min(peek, h), half: Math.min(half, peek) };
@@ -44,7 +60,18 @@
     if (order[state] > order[sheetState]) setSheetState(state);
   }
 
-  window.addEventListener('resize', () => setSheetState(sheetState));
+  function onViewportChange() {
+    applyViewportSize();
+    setSheetState(sheetState);
+  }
+
+  applyViewportSize();
+  window.addEventListener('resize', onViewportChange);
+  window.addEventListener('orientationchange', onViewportChange);
+  if (window.visualViewport) {
+    window.visualViewport.addEventListener('resize', onViewportChange);
+    window.visualViewport.addEventListener('scroll', onViewportChange);
+  }
 
   // ---------- Перетаскивание шторки ----------
 
